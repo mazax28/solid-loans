@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ethers } from "ethers"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,6 +9,12 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Wallet, TrendingUp, ArrowDownCircle, ArrowUpCircle, RefreshCw, Zap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import {
+  BrowserProvider,
+  parseEther,
+  formatEther,
+  Contract
+} from "ethers"
 
 // Contract ABI (simplified for demo)
 const LENDING_PROTOCOL_ABI = [
@@ -42,8 +47,8 @@ export default function DeFiLendingApp() {
   const { toast } = useToast()
 
   // Contract addresses (these would come from environment variables)
-  const LENDING_PROTOCOL_ADDRESS = process.env.VITE_CONTRACT_ADDRESS || "0x..."
-  const COLLATERAL_TOKEN_ADDRESS = process.env.VITE_COLLATERAL_TOKEN_ADDRESS || "0x..."
+  const LENDING_PROTOCOL_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x..."
+  const COLLATERAL_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_COLLATERAL_TOKEN_ADDRESS || "0x..."
 
   useEffect(() => {
     if (account && provider) {
@@ -63,17 +68,17 @@ export default function DeFiLendingApp() {
       }
 
       setIsLoading(true)
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
+      const provider = new BrowserProvider(window.ethereum)
       const accounts = await provider.send("eth_requestAccounts", [])
-      const signer = provider.getSigner()
+      const signer = await provider.getSigner() 
 
       setProvider(provider)
       setSigner(signer)
       setAccount(accounts[0])
 
       // Initialize contracts
-      const lendingContract = new ethers.Contract(LENDING_PROTOCOL_ADDRESS, LENDING_PROTOCOL_ABI, signer)
-      const collateralContract = new ethers.Contract(COLLATERAL_TOKEN_ADDRESS, COLLATERAL_TOKEN_ABI, signer)
+      const lendingContract = new Contract(LENDING_PROTOCOL_ADDRESS, LENDING_PROTOCOL_ABI, signer)
+      const collateralContract = new Contract(COLLATERAL_TOKEN_ADDRESS, COLLATERAL_TOKEN_ABI, signer)
 
       setLendingContract(lendingContract)
       setCollateralContract(collateralContract)
@@ -100,13 +105,13 @@ export default function DeFiLendingApp() {
 
       // Get user data from lending protocol
       const userData = await lendingContract.getUserData(account)
-      setCollateralAmount(ethers.utils.formatEther(userData[0]))
-      setDebtAmount(ethers.utils.formatEther(userData[1]))
-      setInterestAccrued(ethers.utils.formatEther(userData[2]))
+      setCollateralAmount(formatEther(userData[0]))
+      setDebtAmount(formatEther(userData[1]))
+      setInterestAccrued(formatEther(userData[2]))
 
       // Get user token balance
       const balance = await collateralContract.balanceOf(account)
-      setUserBalance(ethers.utils.formatEther(balance))
+      setUserBalance(formatEther(balance))
     } catch (error) {
       console.error("Error loading user data:", error)
     }
@@ -117,7 +122,7 @@ export default function DeFiLendingApp() {
       if (!depositInput || !lendingContract || !collateralContract) return
 
       setIsLoading(true)
-      const amount = ethers.utils.parseEther(depositInput)
+      const amount = parseEther(depositInput)
 
       // Check allowance
       const allowance = await collateralContract.allowance(account, LENDING_PROTOCOL_ADDRESS)
@@ -154,7 +159,7 @@ export default function DeFiLendingApp() {
       if (!borrowInput || !lendingContract) return
 
       setIsLoading(true)
-      const amount = ethers.utils.parseEther(borrowInput)
+      const amount = parseEther(borrowInput)
 
       const tx = await lendingContract.borrow(amount)
       await tx.wait()
@@ -184,7 +189,7 @@ export default function DeFiLendingApp() {
 
       setIsLoading(true)
       const totalDebt = Number.parseFloat(debtAmount) + Number.parseFloat(interestAccrued)
-      const tx = await lendingContract.repay({ value: ethers.utils.parseEther(totalDebt.toString()) })
+      const tx = await lendingContract.repay({ value: parseEther(totalDebt.toString()) })
       await tx.wait()
 
       toast({
