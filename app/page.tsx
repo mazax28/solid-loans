@@ -1,20 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Wallet, TrendingUp, ArrowDownCircle, ArrowUpCircle, RefreshCw, Zap } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import {
-  BrowserProvider,
-  parseEther,
-  formatEther,
-  Contract
-} from "ethers"
+import { Wallet, TrendingUp, ArrowDownCircle, ArrowUpCircle, RefreshCw, Zap, CheckCircle, XCircle } from "lucide-react"
+import { BrowserProvider, parseEther, formatEther, Contract } from "ethers"
 
 // Contract ABI (simplified for demo)
 const LENDING_PROTOCOL_ABI = [
@@ -31,6 +19,13 @@ const COLLATERAL_TOKEN_ABI = [
   "function allowance(address owner, address spender) external view returns (uint256)",
 ]
 
+interface Toast {
+  id: number
+  title: string
+  description: string
+  type: "success" | "error" | "info"
+}
+
 export default function DeFiLendingApp() {
   const [account, setAccount] = useState<string>("")
   const [provider, setProvider] = useState<any>(null)
@@ -44,11 +39,25 @@ export default function DeFiLendingApp() {
   const [depositInput, setDepositInput] = useState<string>("")
   const [borrowInput, setBorrowInput] = useState<string>("")
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const { toast } = useToast()
+  const [toasts, setToasts] = useState<Toast[]>([])
 
   // Contract addresses (these would come from environment variables)
   const LENDING_PROTOCOL_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x..."
   const COLLATERAL_TOKEN_ADDRESS = process.env.NEXT_PUBLIC_COLLATERAL_TOKEN_ADDRESS || "0x..."
+
+  const showToast = (title: string, description: string, type: "success" | "error" | "info" = "info") => {
+    const id = Date.now()
+    const newToast = { id, title, description, type }
+    setToasts((prev) => [...prev, newToast])
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((toast) => toast.id !== id))
+    }, 5000)
+  }
+
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+  }
 
   useEffect(() => {
     if (account && provider) {
@@ -59,18 +68,14 @@ export default function DeFiLendingApp() {
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
-        toast({
-          title: "MetaMask not found",
-          description: "Please install MetaMask to continue",
-          variant: "destructive",
-        })
+        showToast("MetaMask not found", "Please install MetaMask to continue", "error")
         return
       }
 
       setIsLoading(true)
       const provider = new BrowserProvider(window.ethereum)
       const accounts = await provider.send("eth_requestAccounts", [])
-      const signer = await provider.getSigner() 
+      const signer = await provider.getSigner()
 
       setProvider(provider)
       setSigner(signer)
@@ -83,17 +88,10 @@ export default function DeFiLendingApp() {
       setLendingContract(lendingContract)
       setCollateralContract(collateralContract)
 
-      toast({
-        title: "Wallet Connected",
-        description: `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
-      })
+      showToast("Wallet Connected", `Connected to ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`, "success")
     } catch (error) {
       console.error("Error connecting wallet:", error)
-      toast({
-        title: "Connection Failed",
-        description: "Failed to connect wallet",
-        variant: "destructive",
-      })
+      showToast("Connection Failed", "Failed to connect wallet", "error")
     } finally {
       setIsLoading(false)
     }
@@ -135,20 +133,13 @@ export default function DeFiLendingApp() {
       const tx = await lendingContract.depositCollateral(amount)
       await tx.wait()
 
-      toast({
-        title: "Deposit Successful",
-        description: `Deposited ${depositInput} cUSD as collateral`,
-      })
+      showToast("Deposit Successful", `Deposited ${depositInput} cUSD as collateral`, "success")
 
       setDepositInput("")
       loadUserData()
     } catch (error) {
       console.error("Error depositing:", error)
-      toast({
-        title: "Deposit Failed",
-        description: "Failed to deposit collateral",
-        variant: "destructive",
-      })
+      showToast("Deposit Failed", "Failed to deposit collateral", "error")
     } finally {
       setIsLoading(false)
     }
@@ -164,20 +155,13 @@ export default function DeFiLendingApp() {
       const tx = await lendingContract.borrow(amount)
       await tx.wait()
 
-      toast({
-        title: "Borrow Successful",
-        description: `Borrowed ${borrowInput} dDAI`,
-      })
+      showToast("Borrow Successful", `Borrowed ${borrowInput} dDAI`, "success")
 
       setBorrowInput("")
       loadUserData()
     } catch (error) {
       console.error("Error borrowing:", error)
-      toast({
-        title: "Borrow Failed",
-        description: "Failed to borrow tokens. Check collateralization ratio.",
-        variant: "destructive",
-      })
+      showToast("Borrow Failed", "Failed to borrow tokens. Check collateralization ratio.", "error")
     } finally {
       setIsLoading(false)
     }
@@ -192,19 +176,12 @@ export default function DeFiLendingApp() {
       const tx = await lendingContract.repay({ value: parseEther(totalDebt.toString()) })
       await tx.wait()
 
-      toast({
-        title: "Repayment Successful",
-        description: "Loan repaid successfully",
-      })
+      showToast("Repayment Successful", "Loan repaid successfully", "success")
 
       loadUserData()
     } catch (error) {
       console.error("Error repaying:", error)
-      toast({
-        title: "Repayment Failed",
-        description: "Failed to repay loan",
-        variant: "destructive",
-      })
+      showToast("Repayment Failed", "Failed to repay loan", "error")
     } finally {
       setIsLoading(false)
     }
@@ -218,19 +195,12 @@ export default function DeFiLendingApp() {
       const tx = await lendingContract.withdrawCollateral()
       await tx.wait()
 
-      toast({
-        title: "Withdrawal Successful",
-        description: "Collateral withdrawn successfully",
-      })
+      showToast("Withdrawal Successful", "Collateral withdrawn successfully", "success")
 
       loadUserData()
     } catch (error) {
       console.error("Error withdrawing:", error)
-      toast({
-        title: "Withdrawal Failed",
-        description: "Failed to withdraw collateral. Ensure no active debt.",
-        variant: "destructive",
-      })
+      showToast("Withdrawal Failed", "Failed to withdraw collateral. Ensure no active debt.", "error")
     } finally {
       setIsLoading(false)
     }
@@ -254,6 +224,33 @@ export default function DeFiLendingApp() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(120,119,198,0.1),transparent_50%)]" />
 
+      {/* Toast Container */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`
+              flex items-center gap-3 p-4 rounded-lg backdrop-blur-sm border max-w-sm
+              ${toast.type === "success" ? "bg-green-900/50 border-green-500 text-green-100" : ""}
+              ${toast.type === "error" ? "bg-red-900/50 border-red-500 text-red-100" : ""}
+              ${toast.type === "info" ? "bg-blue-900/50 border-blue-500 text-blue-100" : ""}
+              animate-in slide-in-from-right duration-300
+            `}
+          >
+            {toast.type === "success" && <CheckCircle className="h-5 w-5 text-green-400" />}
+            {toast.type === "error" && <XCircle className="h-5 w-5 text-red-400" />}
+            {toast.type === "info" && <Zap className="h-5 w-5 text-blue-400" />}
+            <div className="flex-1">
+              <div className="font-semibold text-sm">{toast.title}</div>
+              <div className="text-xs opacity-90">{toast.description}</div>
+            </div>
+            <button onClick={() => removeToast(toast.id)} className="text-white/60 hover:text-white transition-colors">
+              <XCircle className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -273,28 +270,37 @@ export default function DeFiLendingApp() {
         {/* Connection Status */}
         <div className="flex justify-center mb-8">
           {!account ? (
-            <Button
+            <button
               onClick={connectWallet}
               disabled={isLoading}
-              className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 text-white px-8 py-3 text-lg"
+              className="
+                bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-700 hover:to-purple-700 
+                text-white px-8 py-3 text-lg rounded-lg font-semibold
+                flex items-center gap-2 transition-all duration-200
+                disabled:opacity-50 disabled:cursor-not-allowed
+                shadow-lg hover:shadow-xl
+              "
             >
-              <Wallet className="mr-2 h-5 w-5" />
+              <Wallet className="h-5 w-5" />
               {isLoading ? "Connecting..." : "Connect Wallet"}
-            </Button>
+            </button>
           ) : (
             <div className="flex items-center gap-4">
-              <Badge variant="outline" className="border-cyan-500 text-cyan-400 px-4 py-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-                {account.slice(0, 6)}...{account.slice(-4)}
-              </Badge>
-              <Button
+              <div className="border border-cyan-500 text-cyan-400 px-4 py-2 rounded-lg bg-slate-900/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
+                  {account.slice(0, 6)}...{account.slice(-4)}
+                </div>
+              </div>
+              <button
                 onClick={loadUserData}
-                variant="outline"
-                size="sm"
-                className="border-slate-600 text-slate-300 hover:bg-slate-800"
+                className="
+                  border border-slate-600 text-slate-300 hover:bg-slate-800 
+                  p-2 rounded-lg transition-colors duration-200
+                "
               >
                 <RefreshCw className="h-4 w-4" />
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -302,166 +308,182 @@ export default function DeFiLendingApp() {
         {account && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Portfolio Overview */}
-            <Card className="lg:col-span-3 bg-slate-900/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-cyan-400" />
-                  Portfolio Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-1">Wallet Balance</p>
-                    <p className="text-2xl font-bold text-slate-100">{Number.parseFloat(userBalance).toFixed(4)}</p>
-                    <p className="text-slate-500 text-xs">cUSD</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-1">Collateral</p>
-                    <p className="text-2xl font-bold text-cyan-400">{Number.parseFloat(collateralAmount).toFixed(4)}</p>
-                    <p className="text-slate-500 text-xs">cUSD</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-1">Debt</p>
-                    <p className="text-2xl font-bold text-purple-400">{Number.parseFloat(debtAmount).toFixed(4)}</p>
-                    <p className="text-slate-500 text-xs">dDAI</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-1">Interest</p>
-                    <p className="text-2xl font-bold text-orange-400">
-                      {Number.parseFloat(interestAccrued).toFixed(4)}
-                    </p>
-                    <p className="text-slate-500 text-xs">dDAI</p>
-                  </div>
-                </div>
+            <div className="lg:col-span-3 bg-slate-900/50 border border-slate-700 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <TrendingUp className="h-5 w-5 text-cyan-400" />
+                <h2 className="text-xl font-semibold text-slate-100">Portfolio Overview</h2>
+              </div>
 
-                <Separator className="my-6 bg-slate-700" />
-
-                <div className="flex justify-center">
-                  <div className="text-center">
-                    <p className="text-slate-400 text-sm mb-1">Collateralization Ratio</p>
-                    <p className="text-3xl font-bold text-green-400">{calculateCollateralizationRatio()}%</p>
-                    <p className="text-slate-500 text-xs">Minimum: 150%</p>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <p className="text-slate-400 text-sm mb-1">Wallet Balance</p>
+                  <p className="text-2xl font-bold text-slate-100">{Number.parseFloat(userBalance).toFixed(4)}</p>
+                  <p className="text-slate-500 text-xs">cUSD</p>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="text-center">
+                  <p className="text-slate-400 text-sm mb-1">Collateral</p>
+                  <p className="text-2xl font-bold text-cyan-400">{Number.parseFloat(collateralAmount).toFixed(4)}</p>
+                  <p className="text-slate-500 text-xs">cUSD</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-400 text-sm mb-1">Debt</p>
+                  <p className="text-2xl font-bold text-purple-400">{Number.parseFloat(debtAmount).toFixed(4)}</p>
+                  <p className="text-slate-500 text-xs">dDAI</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-400 text-sm mb-1">Interest</p>
+                  <p className="text-2xl font-bold text-orange-400">{Number.parseFloat(interestAccrued).toFixed(4)}</p>
+                  <p className="text-slate-500 text-xs">dDAI</p>
+                </div>
+              </div>
+
+              <div className="my-6 h-px bg-slate-700" />
+
+              <div className="flex justify-center">
+                <div className="text-center">
+                  <p className="text-slate-400 text-sm mb-1">Collateralization Ratio</p>
+                  <p className="text-3xl font-bold text-green-400">{calculateCollateralizationRatio()}%</p>
+                  <p className="text-slate-500 text-xs">Minimum: 150%</p>
+                </div>
+              </div>
+            </div>
 
             {/* Deposit Collateral */}
-            <Card className="bg-slate-900/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100 flex items-center gap-2">
-                  <ArrowDownCircle className="h-5 w-5 text-cyan-400" />
-                  Deposit Collateral
-                </CardTitle>
-                <CardDescription className="text-slate-400">Deposit cUSD tokens as collateral</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="bg-slate-900/50 border border-slate-700 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ArrowDownCircle className="h-5 w-5 text-cyan-400" />
+                <h3 className="text-lg font-semibold text-slate-100">Deposit Collateral</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-6">Deposit cUSD tokens as collateral</p>
+
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="deposit" className="text-slate-300">
+                  <label htmlFor="deposit" className="block text-slate-300 text-sm font-medium mb-2">
                     Amount (cUSD)
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="deposit"
                     type="number"
                     placeholder="0.00"
                     value={depositInput}
                     onChange={(e) => setDepositInput(e.target.value)}
-                    className="bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-500"
+                    className="
+                      w-full bg-slate-800 border border-slate-600 text-slate-100 placeholder-slate-500
+                      px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent
+                      transition-all duration-200
+                    "
                   />
                 </div>
-                <Button
+                <button
                   onClick={deposit}
                   disabled={!depositInput || isLoading}
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700"
+                  className="
+                    w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700
+                    text-white py-3 rounded-lg font-semibold transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    shadow-lg hover:shadow-xl
+                  "
                 >
                   {isLoading ? "Processing..." : "Deposit Collateral"}
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            </div>
 
             {/* Borrow */}
-            <Card className="bg-slate-900/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100 flex items-center gap-2">
-                  <ArrowUpCircle className="h-5 w-5 text-purple-400" />
-                  Borrow
-                </CardTitle>
-                <CardDescription className="text-slate-400">Borrow dDAI against your collateral</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="bg-slate-900/50 border border-slate-700 backdrop-blur-sm rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ArrowUpCircle className="h-5 w-5 text-purple-400" />
+                <h3 className="text-lg font-semibold text-slate-100">Borrow</h3>
+              </div>
+              <p className="text-slate-400 text-sm mb-6">Borrow dDAI against your collateral</p>
+
+              <div className="space-y-4">
                 <div>
-                  <Label htmlFor="borrow" className="text-slate-300">
+                  <label htmlFor="borrow" className="block text-slate-300 text-sm font-medium mb-2">
                     Amount (dDAI)
-                  </Label>
-                  <Input
+                  </label>
+                  <input
                     id="borrow"
                     type="number"
                     placeholder="0.00"
                     value={borrowInput}
                     onChange={(e) => setBorrowInput(e.target.value)}
-                    className="bg-slate-800 border-slate-600 text-slate-100 placeholder-slate-500"
+                    className="
+                      w-full bg-slate-800 border border-slate-600 text-slate-100 placeholder-slate-500
+                      px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                      transition-all duration-200
+                    "
                   />
                   <p className="text-xs text-slate-500 mt-1">Max: {getMaxBorrowAmount()} dDAI</p>
                 </div>
-                <Button
+                <button
                   onClick={borrow}
                   disabled={!borrowInput || isLoading || Number.parseFloat(collateralAmount) === 0}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="
+                    w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700
+                    text-white py-3 rounded-lg font-semibold transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    shadow-lg hover:shadow-xl
+                  "
                 >
                   {isLoading ? "Processing..." : "Borrow"}
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            </div>
 
             {/* Repay & Withdraw */}
-            <Card className="bg-slate-900/50 border-slate-700 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-slate-100">Manage Position</CardTitle>
-                <CardDescription className="text-slate-400">Repay loans and withdraw collateral</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button
+            <div className="bg-slate-900/50 border border-slate-700 backdrop-blur-sm rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-slate-100 mb-4">Manage Position</h3>
+              <p className="text-slate-400 text-sm mb-6">Repay loans and withdraw collateral</p>
+
+              <div className="space-y-4">
+                <button
                   onClick={repay}
                   disabled={isLoading || Number.parseFloat(debtAmount) === 0}
-                  className="w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                  className="
+                    w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700
+                    text-white py-3 rounded-lg font-semibold transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    shadow-lg hover:shadow-xl
+                  "
                 >
                   {isLoading
                     ? "Processing..."
                     : `Repay Loan (${(Number.parseFloat(debtAmount) + Number.parseFloat(interestAccrued)).toFixed(4)} dDAI)`}
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={withdraw}
                   disabled={isLoading || Number.parseFloat(debtAmount) > 0 || Number.parseFloat(collateralAmount) === 0}
-                  variant="outline"
-                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-800"
+                  className="
+                    w-full border border-slate-600 text-slate-300 hover:bg-slate-800 
+                    py-3 rounded-lg font-semibold transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                  "
                 >
                   {isLoading ? "Processing..." : "Withdraw Collateral"}
-                </Button>
-              </CardContent>
-            </Card>
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Protocol Info */}
-        <Card className="mt-8 bg-slate-900/30 border-slate-700 backdrop-blur-sm">
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-              <div>
-                <h3 className="text-slate-300 font-semibold mb-2">Collateralization Ratio</h3>
-                <p className="text-slate-400 text-sm">Minimum 150% required</p>
-              </div>
-              <div>
-                <h3 className="text-slate-300 font-semibold mb-2">Interest Rate</h3>
-                <p className="text-slate-400 text-sm">5% weekly (fixed)</p>
-              </div>
-              <div>
-                <h3 className="text-slate-300 font-semibold mb-2">Exchange Rate</h3>
-                <p className="text-slate-400 text-sm">1 cUSD = 1 dDAI</p>
-              </div>
+        <div className="mt-8 bg-slate-900/30 border border-slate-700 backdrop-blur-sm rounded-xl p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div>
+              <h3 className="text-slate-300 font-semibold mb-2">Collateralization Ratio</h3>
+              <p className="text-slate-400 text-sm">Minimum 150% required</p>
             </div>
-          </CardContent>
-        </Card>
+            <div>
+              <h3 className="text-slate-300 font-semibold mb-2">Interest Rate</h3>
+              <p className="text-slate-400 text-sm">5% weekly (fixed)</p>
+            </div>
+            <div>
+              <h3 className="text-slate-300 font-semibold mb-2">Exchange Rate</h3>
+              <p className="text-slate-400 text-sm">1 cUSD = 1 dDAI</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

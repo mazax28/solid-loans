@@ -47,16 +47,16 @@ El proyecto incluye pruebas unitarias para todos los contratos, incluyendo casos
 
 ### ✅ Ejecutar los tests
 
-```bash
+\`\`\`bash
 npx hardhat test
-```
+\`\`\`
 
 ## 🧪  Verificar cobertura de código
 
-```bash
+\`\`\`bash
 npm run coverage
 
-```
+\`\`\`
 
 ## Contratos
 CollateralToken.sol: ERC20 básico para simular cUSD (colateral)
@@ -81,9 +81,9 @@ ETHERSCAN_API_KEY=TU_API_KEY
 
 ## Deploy:
 
-```bash
+\`\`\`bash
 npx hardhat run scripts/deploy.js --network sepolia
-```
+\`\`\`
 Cada vez que corremos el script de deploy, estamos desplegando una nueva instancia de tus contratos en la red Sepolia, lo que significa que las direcciones anteriores (como 0x48BB... y 0xD36eBf...) en NEXT_PUBLIC_CONTRACT_ADDRESS y NEXT_PUBLIC_COLLATERAL_TOKEN_ADDRESS respectivamente, ya no son válidas para esta nueva versión del frontend, a menos que sigas usando esas instancias anteriores.
 Deben ser reemplazadas por las nuevas que nos aparecen en la terminal:
 
@@ -92,7 +92,6 @@ NEXT_PUBLIC_COLLATERAL_TOKEN_ADDRESS=<nueva dirección del token CollateralToken
 
 ## Verificación en Etherscan:
 
-```bash
+\`\`\`bash
 npx hardhat verify --network sepolia <contractAddress> <args...>
-```
-
+\`\`\`

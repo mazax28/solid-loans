@@ -6,29 +6,6 @@
   :root {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    --radius: 0.75rem;
-    --chart-1: 173 58% 39%;
-    --chart-2: 12 76% 61%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
   }
 }
 
@@ -45,31 +22,9 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
-    --radius: 0.75rem;
-    --chart-1: 173 58% 39%;
-    --chart-2: 12 76% 61%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
   }
 }
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -111,3 +66,74 @@
   animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Custom animations */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.slide-in-from-right {
+  animation-name: slide-in-from-right;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+/* Gradient text utilities */
+.bg-clip-text {
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Focus states */
+input:focus {
+  outline: none;
+}
+
+/* Button hover effects */
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Card hover effects */
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Backdrop blur fallback */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+@supports not (backdrop-filter: blur(4px)) {
+  .backdrop-blur-sm {
+    background-color: rgba(15, 23, 42, 0.8);
+  }
+}

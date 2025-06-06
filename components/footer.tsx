@@ -14,16 +14,28 @@ export function Footer() {
               community.
             </p>
             <div className="flex gap-4 mt-6">
-              <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
+              <a
+                href="#"
+                className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-slate-800"
+              >
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
+              <a
+                href="#"
+                className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-slate-800"
+              >
                 <Discord className="h-5 w-5" />
               </a>
-              <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
+              <a
+                href="#"
+                className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-slate-800"
+              >
                 <Github className="h-5 w-5" />
               </a>
-              <a href="#" className="text-slate-400 hover:text-cyan-400 transition-colors">
+              <a
+                href="#"
+                className="text-slate-400 hover:text-cyan-400 transition-colors p-2 rounded-lg hover:bg-slate-800"
+              >
                 <Globe className="h-5 w-5" />
               </a>
             </div>
@@ -34,22 +46,22 @@ export function Footer() {
             <h3 className="text-slate-200 font-semibold mb-4">Protocol</h3>
             <ul className="space-y-2 text-slate-400">
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Documentation
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Security
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Governance
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Analytics
                 </a>
               </li>
@@ -61,22 +73,22 @@ export function Footer() {
             <h3 className="text-slate-200 font-semibold mb-4">Community</h3>
             <ul className="space-y-2 text-slate-400">
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Blog
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Forum
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Support
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-cyan-400 transition-colors">
+                <a href="#" className="hover:text-cyan-400 transition-colors py-1 block">
                   Bug Bounty
                 </a>
               </li>
